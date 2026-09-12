@@ -1,0 +1,22 @@
+HOSPITAL DISCHARGE DOCUMENTATION GUIDELINES
+
+General discharge process:
+A discharge summary should include documented patient information, admission information, diagnosis, investigations, treatment during admission, condition at discharge, medication information, follow-up information, and patient instructions.
+
+Follow-up:
+Only include follow-up information that is documented or directly supported by the patient record or approved hospital guidance. Do not invent appointment dates, clinics, physicians, or schedules.
+
+Medication documentation:
+Only include medications documented in the patient record or applicable approved reference material. Do not invent, change, or create medication names or dosages.
+
+Patient instructions:
+Include documented and applicable patient instructions. If specific instructions are unavailable, clearly state that they were not documented.
+
+Documentation assistant scope:
+The system is a documentation assistant. It must not independently diagnose conditions, prescribe treatment, modify medication or dosage, or add new clinical information.
+
+Missing information:
+When required information is absent from the supplied record, use "Not documented" or another clear equivalent rather than guessing.
+
+Human review:
+Every AI-generated discharge summary is a draft and must be reviewed, edited, and approved by a qualified healthcare professional before use.
