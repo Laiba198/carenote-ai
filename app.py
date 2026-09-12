@@ -4,6 +4,7 @@ import io
 import re
 import html
 import textwrap
+import sqlite3
 from datetime import datetime
 
 import streamlit as st
@@ -51,127 +52,144 @@ st.markdown(
     """
     <style>
     :root {
-        --navy:#0b1f3a;
-        --navy2:#12345a;
-        --blue:#2563eb;
-        --blue2:#3b82f6;
-        --teal:#0f9f9a;
-        --ink:#12263f;
-        --body:#30465f;
-        --muted:#64748b;
-        --line:#d8e2ee;
-        --surface:#ffffff;
-        --soft:#f4f8fc;
+        --navy: #10264d;
+        --navy-2: #172f5f;
+        --blue: #4f7cff;
+        --cyan: #38c7d6;
+        --purple: #7858e8;
+        --text: #19345d;
+        --muted: #71819a;
+        --surface: rgba(255,255,255,.88);
+        --line: #dfe8f5;
     }
 
     .stApp {
         background:
-          radial-gradient(circle at 92% 4%, rgba(59,130,246,.12), transparent 24%),
-          radial-gradient(circle at 3% 92%, rgba(20,184,166,.10), transparent 27%),
-          linear-gradient(135deg,#f7fbff 0%,#edf5fb 52%,#f8fbff 100%);
-        color:var(--body) !important;
+            radial-gradient(circle at 85% 8%, rgba(104,151,255,.18), transparent 28%),
+            radial-gradient(circle at 12% 85%, rgba(72,211,209,.15), transparent 30%),
+            linear-gradient(135deg, #f5f9ff 0%, #eef7ff 48%, #f9fbff 100%);
     }
-    .block-container{max-width:1400px;padding:1.4rem 2rem 3rem;}
-    #MainMenu,footer{visibility:hidden;}
-    header{background:transparent!important;}
 
-    /* Force readable text across Streamlit widgets */
-    h1,h2,h3,h4,h5,h6,
-    [data-testid="stMarkdownContainer"] p,
-    [data-testid="stMarkdownContainer"] li,
-    label,
-    .stCaption,
-    .stTextInput label,
-    .stSelectbox label,
-    .stFileUploader label,
-    .stTextArea label,
-    .stRadio label,
-    [data-baseweb="select"] * {
-        color:var(--ink) !important;
+    .block-container {
+        max-width: 1450px;
+        padding-top: 1.25rem;
+        padding-bottom: 3rem;
     }
-    [data-testid="stMarkdownContainer"] p,
-    [data-testid="stMarkdownContainer"] li { line-height:1.6; }
-    .stCaption{color:var(--muted)!important;}
 
-    /* Sidebar */
-    section[data-testid="stSidebar"]{
-        background:linear-gradient(180deg,#081a31 0%,#0d2747 55%,#091a30 100%) !important;
-        border-right:1px solid rgba(255,255,255,.07);
+    #MainMenu, footer { visibility: hidden; }
+    header { background: transparent !important; }
+
+    h1,h2,h3,h4 { color: var(--text); letter-spacing: -.025em; }
+    p,li,label { color: #4f6079; }
+
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #10264d 0%, #152f60 62%, #101f43 100%);
+        border: none;
     }
-    section[data-testid="stSidebar"]>div{background:transparent!important;}
-    section[data-testid="stSidebar"] .block-container{padding:1.25rem .9rem 1.5rem;}
-    section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+    section[data-testid="stSidebar"] > div {
+        background: transparent;
+    }
+    section[data-testid="stSidebar"] .block-container {
+        padding: 1.5rem 1rem 1.25rem;
+    }
+    section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] .stCaption{color:#cbd8e8!important;}
-    .brand-wrap{padding:7px 9px 24px;}
-    .brand-row{display:flex;align-items:center;gap:11px;}
-    .brand-mark{width:45px;height:45px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#16b8b0,#2563eb);color:#fff;font-size:23px;font-weight:900;box-shadow:0 9px 24px rgba(37,99,235,.28);}
-    .brand-name{color:#fff!important;font-size:21px;font-weight:900;letter-spacing:-.03em;}
-    .brand-ai{color:#72b5ff!important;}
-    .brand-sub{color:#8fa7c3!important;font-size:10px;margin:6px 0 0 56px;letter-spacing:.02em;}
-    .sidebar-label{color:#7893b3!important;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.15em;margin:15px 8px 8px;}
-    section[data-testid="stSidebar"] div[role="radiogroup"]{gap:3px;}
-    section[data-testid="stSidebar"] div[role="radiogroup"] label{
-        background:transparent!important;border-radius:11px!important;padding:8px 10px!important;margin:1px 0!important;min-height:38px;
+    section[data-testid="stSidebar"] .stCaption {
+        color: #c8d6ee !important;
     }
-    section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{background:rgba(255,255,255,.08)!important;}
-    section[data-testid="stSidebar"] div[role="radiogroup"] label p{color:#cbd8e8!important;font-weight:750!important;font-size:13px!important;}
-    section[data-testid="stSidebar"] div[role="radiogroup"] label[data-checked="true"]{background:linear-gradient(90deg,#2456c9,#3159b7)!important;box-shadow:0 6px 18px rgba(17,52,110,.28);}
-    section[data-testid="stSidebar"] div[role="radiogroup"] label[data-checked="true"] p{color:#fff!important;}
-    .sidebar-status{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#b9cbe1!important;font-size:11px;line-height:1.55;}
-    .sidebar-user{padding:12px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);margin-top:7px;}
-    .sidebar-user-name{color:#fff!important;font-weight:800;font-size:12px;}
-    .sidebar-user-email{color:#9fb2ca!important;font-size:10px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;}
 
-    /* Global cards */
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:3px 1px 18px;}
-    .topbar-title{font-size:13px;font-weight:800;color:#35506f!important;}
-    .user-chip{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 5px 18px rgba(16,42,72,.06);color:#294564!important;font-size:12px;font-weight:800;}
-    .avatar{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e9f1ff;color:#2456c9!important;}
-    .hero{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:25px;padding:34px 38px;box-shadow:0 16px 45px rgba(24,57,92,.08);margin-bottom:18px;}
-    .hero:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-105px;top:-125px;background:linear-gradient(135deg,rgba(37,99,235,.14),rgba(15,159,154,.07));}
-    .eyebrow{color:#2563c9!important;font-size:10px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;}
-    .hero h1{font-size:39px;margin:7px 0 8px;color:#102a47!important;}
-    .hero p{font-size:15px;max-width:800px;margin:0;color:#526983!important;line-height:1.7;}
-    .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#edf4ff;color:#2456b8!important;font-size:10px;font-weight:850;border:1px solid #d8e6fb;}
-    .hero-badges{margin-top:17px;display:flex;gap:7px;flex-wrap:wrap;}
-    .metric{background:#fff;border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:0 7px 22px rgba(20,50,85,.05);}
-    .metric .label{font-size:9px;font-weight:900;color:#71839a!important;text-transform:uppercase;letter-spacing:.11em;}
-    .metric .value{color:#153556!important;font-size:23px;font-weight:900;margin-top:4px;}
-    .card,.section-card{background:#fff;border:1px solid var(--line);border-radius:19px;padding:20px;box-shadow:0 7px 24px rgba(20,50,85,.045);margin-bottom:15px;}
-    .card-title,.section-title{font-size:16px;font-weight:900;color:#163858!important;margin-bottom:4px;}
-    .card-sub,.section-help{font-size:11px;color:#667c95!important;margin-bottom:13px;line-height:1.5;}
-    .notice{padding:14px 16px;border-radius:14px;background:#eff6ff;border:1px solid #d5e5fb;color:#3d5875!important;font-size:12px;line-height:1.55;}
-    .warning{padding:14px 16px;border-radius:14px;background:#fff8e8;border:1px solid #f0dfb9;color:#735b25!important;font-size:12px;line-height:1.55;}
-    .success-box{padding:14px 16px;border-radius:14px;background:#edf9f6;border:1px solid #ccebe3;color:#2e6e64!important;font-size:12px;}
+    .brand-wrap { padding: 8px 8px 22px; }
+    .brand-mark {
+        width: 48px; height: 48px; border-radius: 16px;
+        display: inline-flex; align-items:center; justify-content:center;
+        background: linear-gradient(135deg,#42d9df,#7858e8);
+        color: white; font-size: 25px; box-shadow: 0 10px 25px rgba(56,199,214,.22);
+        vertical-align: middle; margin-right: 10px;
+    }
+    .brand-name { color: white; font-size: 22px; font-weight: 850; vertical-align: middle; }
+    .brand-ai { color: #88a4ff; }
+    .brand-sub { color:#a9bad9; font-size:11px; margin:7px 0 0 58px; }
 
-    /* Login */
-    .login-shell{min-height:76vh;display:flex;align-items:center;}
-    .welcome-card{background:#fff;border:1px solid #d8e3ef;border-radius:28px;padding:38px 38px 30px;box-shadow:0 22px 65px rgba(22,54,91,.12);text-align:center;}
-    .welcome-icon{width:70px;height:70px;border-radius:22px;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;font-size:35px;color:#fff!important;background:linear-gradient(135deg,#0fa7a2,#2e63db);box-shadow:0 12px 28px rgba(46,99,219,.22);}
-    .welcome-card h1{font-size:37px;margin:6px 0 6px;color:#102b48!important;}
-    .welcome-card h2{font-size:22px!important;color:#173b60!important;margin:22px 0 4px;}
-    .welcome-card .lead{color:#637b95!important;font-size:14px;margin:7px 0 22px;}
-    .login-note{font-size:11px;color:#70849b!important;line-height:1.5;text-align:center;margin-top:10px;}
-    .security-box{margin-top:17px;padding:12px 14px;border-radius:14px;background:#f1f7fc;border:1px solid #dce8f3;color:#526b84!important;font-size:10.5px;line-height:1.55;text-align:left;}
-    .feature-panel{background:#fff;border:1px solid var(--line);border-radius:25px;padding:20px;box-shadow:0 15px 45px rgba(22,54,91,.07);}
-    .feature-photo{height:175px;border-radius:19px;margin-bottom:14px;background:linear-gradient(135deg,#e7f5ff,#f0f7ff 50%,#e9f3f7);display:flex;align-items:center;justify-content:center;font-size:65px;}
-    .feature-item{display:flex;gap:11px;padding:11px 2px;}
-    .feature-dot{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#edf4ff;font-size:18px;flex:0 0 auto;}
-    .feature-item b{color:#183c63!important;font-size:12px;}
-    .feature-item span{display:block;color:#71849b!important;font-size:10.5px;margin-top:2px;line-height:1.4;}
+    .sidebar-label { color:#8ea5ca; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.13em; margin:18px 8px 8px; }
 
-    /* Inputs and buttons */
-    .stButton>button,.stDownloadButton>button{border-radius:12px!important;min-height:42px;font-weight:850!important;border:1px solid #d4e0ec!important;color:#183957!important;background:#fff!important;box-shadow:none!important;}
-    .stButton>button:hover,.stDownloadButton>button:hover{border-color:#9eb9da!important;transform:translateY(-1px);}
-    .stButton>button[kind="primary"]{background:linear-gradient(135deg,#2457d4,#6849dc)!important;border:none!important;color:#fff!important;box-shadow:0 8px 20px rgba(63,81,203,.20)!important;}
-    .stButton>button[kind="primary"] p,.stButton>button[kind="primary"] span{color:#fff!important;}
-    input,textarea{color:#173652!important;background:#fff!important;}
-    input::placeholder,textarea::placeholder{color:#91a1b3!important;}
-    [data-testid="stFileUploader"]{border-radius:17px;background:#fff;border:1px solid var(--line);padding:5px;}
-    [data-testid="stFileUploaderDropzone"]{background:#f7fbff!important;border-radius:13px!important;}
-    div[data-testid="stExpander"]{border:1px solid var(--line);border-radius:14px;background:#fff;}
-    .footer-note{margin-top:28px;padding:15px 2px;border-top:1px solid #d8e2ed;color:#74879d!important;font-size:10px;line-height:1.6;}
+    .topbar {
+        display:flex; align-items:center; justify-content:space-between;
+        padding: 8px 2px 20px;
+    }
+    .topbar-title { font-size:14px; font-weight:800; color:#24416e; }
+    .user-chip {
+        display:flex; align-items:center; gap:10px; padding:8px 13px;
+        border-radius:999px; background:rgba(255,255,255,.78); border:1px solid #dce7f6;
+        box-shadow:0 5px 18px rgba(36,65,110,.06); color:#24416e; font-size:13px; font-weight:700;
+    }
+    .avatar { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eaf1ff;color:#496dd6; }
+
+    .hero {
+        position:relative; overflow:hidden; background:rgba(255,255,255,.88);
+        border:1px solid rgba(213,226,244,.9); border-radius:30px; padding:42px 46px;
+        box-shadow:0 18px 55px rgba(38,70,115,.09); margin-bottom:22px;
+    }
+    .hero:after {
+        content:""; position:absolute; width:310px;height:310px;border-radius:50%;right:-110px;top:-135px;
+        background:linear-gradient(135deg,rgba(78,126,255,.16),rgba(71,210,207,.06));
+    }
+    .eyebrow { color:#5a72c9; font-size:11px; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+    .hero h1 { font-size:43px; margin:7px 0 9px; color:#132f59; }
+    .hero p { font-size:16px; max-width:760px; margin:0; color:#71819a; line-height:1.65; }
+    .hero-badges { margin-top:19px; display:flex; gap:8px; flex-wrap:wrap; }
+    .badge { display:inline-block; padding:7px 12px; border-radius:999px; background:#eef4ff; color:#496ac1; font-size:11px; font-weight:800; border:1px solid #dce7fb; }
+
+    .welcome-card {
+        background:rgba(255,255,255,.93); border:1px solid #dce7f4; border-radius:30px;
+        padding:45px 40px; box-shadow:0 18px 60px rgba(38,70,115,.10); text-align:center;
+    }
+    .welcome-icon { width:76px;height:76px;border-radius:26px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:39px;color:white;background:linear-gradient(135deg,#3bcbd5,#7656e8);box-shadow:0 14px 30px rgba(90,88,225,.20); }
+    .welcome-card h1 { font-size:40px; margin:0; }
+    .welcome-card .lead { color:#6d7d96; font-size:15px; margin:8px 0 26px; }
+
+    .feature-panel { background:rgba(255,255,255,.65); border:1px solid #dce7f4; border-radius:28px; padding:22px; }
+    .feature-photo {
+        height:190px; border-radius:22px; margin-bottom:18px;
+        background:linear-gradient(135deg,#dceeff,#eef7ff 50%,#e7ecff);
+        display:flex; align-items:center; justify-content:center; font-size:70px;
+    }
+    .feature-item { display:flex; gap:13px; padding:13px 4px; }
+    .feature-dot { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#edf3ff;font-size:20px;flex:0 0 auto; }
+    .feature-item b { color:#203f72; font-size:13px; }
+    .feature-item span { display:block; color:#7a8aa2; font-size:11px; margin-top:3px; line-height:1.4; }
+
+    .security-box { margin-top:20px; padding:13px 15px; border-radius:16px; background:#f1f6ff; border:1px solid #dce8fb; color:#57709b; font-size:11px; text-align:left; }
+
+    .card {
+        background:rgba(255,255,255,.88); border:1px solid #dce7f4; border-radius:22px;
+        padding:22px; box-shadow:0 9px 30px rgba(38,70,115,.055); margin-bottom:16px;
+    }
+    .card-title { font-size:17px; font-weight:850; color:#1b3b6b; margin-bottom:4px; }
+    .card-sub { font-size:12px; color:#8190a7; margin-bottom:15px; }
+
+    .metric { background:rgba(255,255,255,.82); border:1px solid #dce7f4; border-radius:18px; padding:17px; box-shadow:0 7px 25px rgba(38,70,115,.045); }
+    .metric .label { font-size:10px; font-weight:800; color:#7d8da7; text-transform:uppercase; letter-spacing:.1em; }
+    .metric .value { color:#183861; font-size:24px; font-weight:850; margin-top:5px; }
+
+    .notice { padding:15px 17px; border-radius:16px; background:#f0f7ff; border:1px solid #d8e8fa; color:#536b8d; font-size:12px; line-height:1.55; }
+    .warning { padding:15px 17px; border-radius:16px; background:#fff8e7; border:1px solid #f1dfb3; color:#765e25; font-size:12px; line-height:1.55; }
+    .success-box { padding:15px 17px; border-radius:16px; background:#effaf7; border:1px solid #d2eee7; color:#397468; font-size:12px; }
+
+    .stButton > button { border-radius:13px; min-height:43px; font-weight:800; border:1px solid #d9e5f4; }
+    .stButton > button[kind="primary"] { background:linear-gradient(135deg,#385bd6,#7858e8); border:none; color:white; }
+    .stDownloadButton > button { border-radius:13px; font-weight:800; }
+    [data-testid="stFileUploader"] { border-radius:18px; background:rgba(255,255,255,.8); }
+    textarea, input { border-radius:12px !important; }
+    div[data-testid="stExpander"] { border:1px solid #dce7f4; border-radius:16px; background:rgba(255,255,255,.7); }
+    .footer-note { margin-top:35px; padding:17px 2px; border-top:1px solid #dbe5f2; color:#8090a7; font-size:10px; line-height:1.6; }
+
+    /* Sidebar radio navigation */
+    section[data-testid="stSidebar"] div[role="radiogroup"] label {
+        background:transparent !important; border-radius:12px; padding:8px 10px !important; margin:3px 0 !important;
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] label:hover { background:rgba(255,255,255,.08) !important; }
+    section[data-testid="stSidebar"] div[role="radiogroup"] p { color:#d9e5f8 !important; font-weight:700; }
+    section[data-testid="stSidebar"] div[role="radiogroup"] label[data-checked="true"] { background:linear-gradient(90deg,rgba(92,112,231,.9),rgba(91,91,210,.55)) !important; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -199,6 +217,9 @@ DEFAULTS = {
     "demo_logged_in": False,
     "demo_email": "",
     "demo_name": "",
+    "patient_name": "",
+    "selected_patient_id": None,
+    "saved_patients": [],
 }
 
 
@@ -212,11 +233,8 @@ for key, value in DEFAULTS.items():
 # ============================================================
 
 def has_real_oidc_config():
-    """Return True only when the full Streamlit OIDC configuration exists."""
-    required = {"redirect_uri", "cookie_secret", "client_id", "client_secret", "server_metadata_url"}
     try:
-        auth = st.secrets["auth"]
-        return required.issubset(set(auth.keys()))
+        return "auth" in st.secrets
     except Exception:
         return False
 
@@ -244,8 +262,11 @@ def show_login_screen():
                 st.login()
         else:
             if st.button("🌈  Continue with Google", type="primary", use_container_width=True):
-                st.info("Google sign-in is available after the app is deployed and Google OIDC is configured. For Colab testing, use the Email sign-in below.")
-            st.markdown("<div class='login-note'>Google authentication is enabled on the deployed Streamlit Cloud version after OIDC setup.</div>", unsafe_allow_html=True)
+                st.session_state["demo_logged_in"] = True
+                st.session_state["demo_name"] = "Demo User"
+                st.session_state["demo_email"] = "demo@carenote.ai"
+                st.rerun()
+            st.caption("Google authentication will become real after OIDC is configured for the deployed app.")
 
         st.markdown("<div style='text-align:center;color:#9aa8bb;margin:15px 0;'>or</div>", unsafe_allow_html=True)
 
@@ -310,15 +331,123 @@ else:
 
 
 # ============================================================
+# PATIENT MEMORY — DEMO PERSISTENCE
+# ============================================================
+
+DB_PATH = "carenote.db"
+
+
+def get_current_user_key():
+    """Stable user key: Google OIDC subject when available, email otherwise."""
+    if has_real_oidc_config():
+        return str(getattr(st.user, "sub", None) or getattr(st.user, "email", "")).strip().lower()
+    return str(st.session_state.get("demo_email", "demo@carenote.ai")).strip().lower()
+
+
+def init_patient_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_key TEXT PRIMARY KEY,
+            name TEXT,
+            email TEXT,
+            created_at TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS patients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT NOT NULL,
+            patient_name TEXT NOT NULL,
+            patient_data TEXT NOT NULL,
+            summary TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def ensure_current_user():
+    user_key = get_current_user_key()
+    if not user_key:
+        return
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute(
+        "INSERT OR IGNORE INTO users(user_key, name, email, created_at) VALUES (?, ?, ?, ?)",
+        (user_key, CURRENT_USER_NAME, CURRENT_USER_EMAIL, datetime.now().isoformat()),
+    )
+    conn.execute(
+        "UPDATE users SET name=?, email=? WHERE user_key=?",
+        (CURRENT_USER_NAME, CURRENT_USER_EMAIL, user_key),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_saved_patients():
+    user_key = get_current_user_key()
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute(
+        "SELECT id, patient_name, updated_at FROM patients WHERE user_key=? ORDER BY updated_at DESC",
+        (user_key,),
+    ).fetchall()
+    conn.close()
+    return rows
+
+
+def save_patient(patient_name, patient_data, summary=""):
+    user_key = get_current_user_key()
+    now = datetime.now().isoformat()
+    conn = sqlite3.connect(DB_PATH)
+    existing = conn.execute(
+        "SELECT id FROM patients WHERE user_key=? AND patient_name=? ORDER BY id DESC LIMIT 1",
+        (user_key, patient_name.strip()),
+    ).fetchone()
+    if existing:
+        conn.execute(
+            "UPDATE patients SET patient_data=?, summary=?, updated_at=? WHERE id=?",
+            (patient_data, summary, now, existing[0]),
+        )
+        patient_id = existing[0]
+    else:
+        cur = conn.execute(
+            "INSERT INTO patients(user_key, patient_name, patient_data, summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_key, patient_name.strip(), patient_data, summary, now, now),
+        )
+        patient_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return patient_id
+
+
+def load_patient(patient_id):
+    user_key = get_current_user_key()
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute(
+        "SELECT id, patient_name, patient_data, summary FROM patients WHERE id=? AND user_key=?",
+        (patient_id, user_key),
+    ).fetchone()
+    conn.close()
+    return row
+
+
+init_patient_db()
+ensure_current_user()
+st.session_state["saved_patients"] = get_saved_patients()
+
+
+# ============================================================
 # BACKEND
 # ============================================================
 
 groq_api_key = os.getenv("GROQ_API_KEY")
 
 if not groq_api_key:
-    st.error("AI services are not connected yet.")
+    st.error("GROQ_API_KEY is not configured.")
     st.info(
-        "Add GROQ_API_KEY to your Colab environment or Streamlit Cloud app secrets. "
+        "For local/Streamlit Cloud deployment, add GROQ_API_KEY to your app secrets. "
         "Never place the API key directly inside app.py."
     )
     st.stop()
@@ -817,6 +946,28 @@ if page == "🏠 Home":
         unsafe_allow_html=True,
     )
 
+    st.markdown("### 👥 My remembered patients")
+    patients = st.session_state.get("saved_patients", [])
+    if patients:
+        cols = st.columns(min(3, len(patients)))
+        for i, (pid, pname, updated) in enumerate(patients[:6]):
+            with cols[i % len(cols)]:
+                st.markdown(f"<div class='card'><div class='card-title'>{html.escape(pname)}</div><div class='card-sub'>Saved {html.escape(updated[:16].replace('T',' '))}</div></div>", unsafe_allow_html=True)
+                if st.button("Open patient", key=f"open_patient_{pid}", use_container_width=True):
+                    row = load_patient(pid)
+                    if row:
+                        st.session_state["selected_patient_id"] = row[0]
+                        st.session_state["patient_name"] = row[1]
+                        st.session_state["patient_data"] = row[2]
+                        st.session_state["discharge_summary"] = row[3] or ""
+                        st.session_state["edited_summary"] = row[3] or ""
+                        st.session_state["rag_sources"] = get_rag_sources(row[2], k=3) if row[2] else []
+                        st.session_state["missing_fields"] = detect_missing_information(row[3] or "")
+                        st.success(f"Loaded {pname}.")
+                        st.rerun()
+    else:
+        st.info("No saved patients yet. Generate a summary with a patient name to remember the case.")
+
     c1,c2,c3,c4=st.columns(4)
     with c1: st.markdown(f"<div class='metric'><div class='label'>Documents</div><div class='value'>{len(st.session_state['uploaded_names'])}</div></div>", unsafe_allow_html=True)
     with c2: st.markdown(f"<div class='metric'><div class='label'>Summary</div><div class='value'>{'Ready' if st.session_state['edited_summary'] else 'Not started'}</div></div>", unsafe_allow_html=True)
@@ -847,6 +998,14 @@ if page == "🏠 Home":
 elif page == "📄 Patient Documents":
 
     st.markdown("<div class='eyebrow'>Patient workspace</div><h2 style='margin-top:4px'>Patient Documents</h2><p style='color:#7b8ba3'>Upload source records and create a grounded discharge-summary draft.</p>", unsafe_allow_html=True)
+
+    patient_name_input = st.text_input(
+        "Patient name / case label",
+        value=st.session_state.get("patient_name", ""),
+        placeholder="Example: Ahmed Khan (Synthetic)",
+        help="Use synthetic or anonymized data for this MVP.",
+    )
+    st.session_state["patient_name"] = patient_name_input.strip()
 
     left, right = st.columns([1.65, 1], gap="large")
 
@@ -924,8 +1083,19 @@ elif page == "📄 Patient Documents":
                 st.session_state["grounding_result"] = ""
                 st.session_state["rag_sources"] = get_rag_sources(patient_data, k=3)
 
-                st.success("Summary generated successfully.")
-                st.info("Open **Review & Export** from the sidebar to review and edit the draft.")
+                # Save immediately so the case can be remembered on return.
+                if st.session_state.get("patient_name"):
+                    patient_id = save_patient(
+                        st.session_state["patient_name"],
+                        patient_data,
+                        summary,
+                    )
+                    st.session_state["selected_patient_id"] = patient_id
+                    st.session_state["saved_patients"] = get_saved_patients()
+                    st.success("Summary generated and patient case saved to your workspace.")
+                else:
+                    st.success("Summary generated successfully. Add a patient name to save this case.")
+                st.info("Open **Discharge Summary** from the sidebar to review and edit the draft.")
 
             except Exception as e:
                 st.error(f"Generation failed: {e}")
@@ -1036,6 +1206,20 @@ elif page == "📋 Discharge Summary":
                     )
                     st.session_state["section_preview"] = ""
                     st.rerun()
+
+            st.markdown("### Save changes")
+            if st.session_state.get("patient_name"):
+                if st.button("💾 Save patient & latest summary", use_container_width=True):
+                    patient_id = save_patient(
+                        st.session_state["patient_name"],
+                        st.session_state["patient_data"],
+                        st.session_state["edited_summary"],
+                    )
+                    st.session_state["selected_patient_id"] = patient_id
+                    st.session_state["saved_patients"] = get_saved_patients()
+                    st.success("Patient and latest edited summary saved.")
+            else:
+                st.caption("Add a patient name on the Patient Documents page to enable saving.")
 
             st.markdown("### Export")
 
