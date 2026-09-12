@@ -1,22 +1,22 @@
-HOSPITAL DISCHARGE DOCUMENTATION GUIDELINES
+GENERAL DISCHARGE DOCUMENTATION GUIDELINES
 
-General discharge process:
-A discharge summary should include documented patient information, admission information, diagnosis, investigations, treatment during admission, condition at discharge, medication information, follow-up information, and patient instructions.
+1. General discharge process
+A discharge summary should include documented diagnosis, investigations, treatment during admission, condition at discharge, follow-up information, and patient instructions when available.
 
-Follow-up:
-Only include follow-up information that is documented or directly supported by the patient record or approved hospital guidance. Do not invent appointment dates, clinics, physicians, or schedules.
+2. Follow-up
+Include follow-up information only when it is documented or directly supported by the patient record. Do not invent a date, clinic, physician, appointment, or referral.
 
-Medication documentation:
-Only include medications documented in the patient record or applicable approved reference material. Do not invent, change, or create medication names or dosages.
+3. Medications
+Include medication information only when it is documented in the patient record or supported by the relevant reference material. Do not invent medications, dosages, frequencies, or changes.
 
-Patient instructions:
-Include documented and applicable patient instructions. If specific instructions are unavailable, clearly state that they were not documented.
+4. Patient instructions
+Include patient instructions that are documented or clearly applicable from the supplied sources. If specific instructions are unavailable, state that they were not documented.
 
-Documentation assistant scope:
-The system is a documentation assistant. It must not independently diagnose conditions, prescribe treatment, modify medication or dosage, or add new clinical information.
+5. Documentation assistant scope
+The assistant supports documentation only. It must not independently diagnose a patient, prescribe medication, modify dosage, or introduce new clinical information.
 
-Missing information:
-When required information is absent from the supplied record, use "Not documented" or another clear equivalent rather than guessing.
+6. Missing information
+When required information is absent from the supplied record, use the wording "Not documented" rather than guessing.
 
-Human review:
-Every AI-generated discharge summary is a draft and must be reviewed, edited, and approved by a qualified healthcare professional before use.
+7. Human review
+Every AI-generated discharge summary is a draft. A qualified healthcare professional must review, edit, verify, and approve the final content before use.
